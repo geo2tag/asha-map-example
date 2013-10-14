@@ -1,0 +1,7 @@
+MIDlet-1: AshaMapsExample,,AshaMapsExampleMIDlet
+MIDlet-Jar-URL: AshaMapsExample.jar
+MIDlet-Name: AshaMapsExample MIDlet Suite
+MIDlet-Vendor: MIDlet Suite Vendor
+MIDlet-Version: 1.0.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-2.1
