@@ -27,12 +27,17 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 	private Command m_clearMarkCommand = new Command(CLEAR_MAP, Command.HELP, 0);
 
     private String m_currentFocus;
+	private FocalObserverComponent m_focalComponent;
+
+	private InfoBubbleComponent m_infoBubble;
+	private Alert m_alert = new Alert("");
 
 	
 	private CommandListener m_commandListener = new CommandListener() {
 		
 		public void commandAction(Command c, Displayable d) {
-			// TODO Auto-generated method stub			
+
+			// Adding random mark
 			if (c == m_addRandomMarkCommand){
 				Random rnd = new Random();
 								
@@ -40,25 +45,23 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 				double lon = map.getCenter().getLongitude() + rnd.nextDouble();
 				
 				addMark(lat, lon, "New mark "+lat+":\n"+lon);
+				
+			// Clearing map
 			}else if ( c == m_clearMarkCommand){
 		        map.removeAllMapObjects();
 
-			}if (c == m_bubbleCommand){
-				m_alert.setString("123456");
-				display.setCurrent(m_alert);
 			}
 		}
 	};
 
-	private FocalObserverComponent m_focalComponent;
+	
+	
 
-	private InfoBubbleComponent m_infoBubble;
-	private Alert m_alert;
+	// When focus changed, we setup InfoBubbleComponent to display text of new focused element
 	private FocalEventListener m_focalListener = new FocalEventListener() {
 		
 		public void onFocusChanged(Object arg0) {
-			// TODO Auto-generated method stub
-			System.out.println("focus changed");
+			System.out.println("focus changed "+arg0.getClass());
 			
 	        m_currentFocus = (String) arg0;
 	        if (m_currentFocus != null) {
@@ -68,29 +71,45 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 	        }
 		}
 	};
+	
+	// This listener is called when map center is set on MapMarker
+	private CommandListener m_bubbleListener = new CommandListener() {
+		
+		public void commandAction(Command c, Displayable d) {
+			if (c == m_bubbleCommand)
+				display.setCurrent(m_alert);
+			
+		}
+	};
 
 	
 	
 	public CustomMapCanvas(Display arg0, double lat, double lon, int zoom) {
 		super(arg0);
 
+		
+		// Setting Alert object for 
+        m_alert.setTimeout(1000);
+		
+        // This class defines a MapComponent which associates an infobubble to a MapObject. 
+        // When the MapObject is moved to the centre of the screen the associated infobubble text is displayed
+        m_infoBubble = new InfoBubbleComponent(this, m_bubbleListener );
+        map.addMapComponent(m_infoBubble);
+		
+        m_focalComponent = new FocalObserverComponent(m_focalListener);
+        
+        // This component allows to process focusing events - when map center is placed on some map object
+        map.addMapComponent(m_focalComponent);
+        
+        // This component allows to change map center position by pressing on map object
+        map.addMapComponent(new CenteringComponent(this));
+        
+        // Setting map center and zoom
 		map.setState(
                 new MapDisplayState(new GeoCoordinate(lat, lon, 0),
                 zoom));
 		
-        m_alert = new Alert("");
-        m_alert.setTimeout(1000);
-		
-        m_infoBubble = new InfoBubbleComponent(this, m_commandListener);
-        map.addMapComponent(m_infoBubble);
-		
-        map.addMapComponent(new CenteringComponent(this));
-
-        m_focalComponent = new FocalObserverComponent(m_focalListener);
-        map.addMapComponent(m_focalComponent);
-        
-        map.addMapComponent(new CenteringComponent(this));
-		
+        // Setup map control commands
 		setCommandListener(m_commandListener);
 		
 		addCommand(m_addRandomMarkCommand);
@@ -99,27 +118,22 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 	}
 	
 	
-
+	// text - data which will be displayed at popup  message
 	protected void addMark(double lat, double lon, String text) {
-		// TODO Auto-generated method stub		
+			
 		MapStandardMarker marker = mapFactory.createStandardMarker(new GeoCoordinate(lat, lon, 0),
 				10, null, MapStandardMarker.BALLOON);	
 		
-        m_focalComponent.addData(marker, text);
-
-		
+        m_focalComponent.addData(marker, text);		
         map.addMapObject(marker);
 	}
 
 
 	
-	public void onMapContentComplete() {
-		// TODO Auto-generated method stub
-		
+	public void onMapContentComplete() {		
 	}
 
 	public void onMapUpdateError(String arg0, Throwable arg1, boolean arg2) {
-		// TODO Auto-generated method stub
 		System.out.println(arg0);
 		arg1.printStackTrace();
 	}
