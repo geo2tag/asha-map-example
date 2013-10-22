@@ -16,7 +16,10 @@ public class Settings {
 	
 	public static final String CHANNEL_NAME = "My channel";
 	
-	public static final double DEFAULT_RADIUS = 100;
+	public static final double DEFAULT_RADIUS = 999999.;
 	public static final String SHOW_ALL_CHANNELS = "Show all channels";
 	
+	private static final String BACK_COMMAND_TEXT = "Back";
+	public static final Command BACK_COMMAND = new Command(BACK_COMMAND_TEXT, Command.HELP, 0);
+
 }

@@ -17,8 +17,9 @@ public class AshaMapsExampleMIDlet extends MIDlet {
 	private Display m_display = Display.getDisplay(this);
 	
 	private CustomMapCanvas m_mapCanvas = new CustomMapCanvas(m_display, 
-			Settings.START_CENTER_LAT, Settings.START_CENTER_LON, Settings.START_ZOOM);
+			Settings.START_ZOOM);
 	private SettingsForm m_settingsForm = new SettingsForm();
+	private WriteTagForm m_writeTagForm = new WriteTagForm();
 	
 	private CommandListener m_formCommandListener = new CommandListener() {
 		
@@ -29,12 +30,15 @@ public class AshaMapsExampleMIDlet extends MIDlet {
 				m_mapCanvas.clearMap();
 			}else if (c.equals(CustomMapCanvas.SETTINGS_COMMAND)){
 				m_display.setCurrent(m_settingsForm);
-			}else if (c.getLabel().equals("Back")){
+			}else if (c.equals(Settings.BACK_COMMAND)){
 				refreshMapCanvas();
 				m_display.setCurrent(m_mapCanvas);
 			}else if (c.equals(CustomMapCanvas.SHOW_NEAREST_TAGS_COMMAND)){
-				refreshMapCanvas();
-				
+				refreshMapCanvas();	
+			}else if (c.equals(WriteTagForm.WRITE_TAG_COMMAND)){
+				m_writeTagForm.writeTag();
+			}else if (c.equals(CustomMapCanvas.WRITE_TAG_COMMAND)){
+				m_display.setCurrent(m_writeTagForm);
 			}
 			
 		}
@@ -45,6 +49,7 @@ public class AshaMapsExampleMIDlet extends MIDlet {
 		double radius  = m_settingsForm.getRadius();
 
 		m_mapCanvas.showNearestTags(channelFilter, radius);
+		m_settingsForm.setChannels(m_mapCanvas.getChannels());
 	}
 	
 	public AshaMapsExampleMIDlet() {
@@ -52,6 +57,7 @@ public class AshaMapsExampleMIDlet extends MIDlet {
 		
 		m_mapCanvas.setCommandListener(		m_formCommandListener);
 		m_settingsForm.setCommandListener(	m_formCommandListener);
+		m_writeTagForm.setCommandListener(  m_formCommandListener);
 		
 		m_settingsForm.setChannels(new Vector());
 	}
@@ -64,8 +70,10 @@ public class AshaMapsExampleMIDlet extends MIDlet {
 	}
 
 	protected void startApp() throws MIDletStateChangeException {
+		
+		
         m_display.setCurrent(m_mapCanvas);
-
+        refreshMapCanvas();
 	}
 	
 

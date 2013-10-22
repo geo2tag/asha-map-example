@@ -12,6 +12,7 @@ import javax.microedition.location.QualifiedCoordinates;
 import ru.spb.osll.json.JsonRequestException;
 import ru.spb.osll.objects.Channel;
 import ru.spb.osll.objects.Mark;
+import ru.spb.osll.objects.User;
 
 import com.nokia.maps.common.ApplicationContext;
 import com.nokia.maps.common.GeoCoordinate;
@@ -30,13 +31,15 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 	private static final String BUBBLE = "InfoBubble";
 	private static final String NEAREST_TAGS = "Show nearest tags";
 	private static final String SETTINGS = "Settings";
+	private static final String WRITE_TAG = "Write tag";	
 
 
 	
     private static final Command m_bubbleCommand = new Command(BUBBLE, Command.OK, 1);
 	public static final Command CLEAR_MAP_COMMAND = new Command(CLEAR_MAP, Command.HELP, 0);
 	public static final Command SHOW_NEAREST_TAGS_COMMAND = new Command(NEAREST_TAGS, Command.HELP, 1);
-	public static final Command SETTINGS_COMMAND = new Command(SETTINGS, Command.HELP, 2);	
+	public static final Command SETTINGS_COMMAND = new Command(SETTINGS, Command.HELP, 2);
+	public static final Command WRITE_TAG_COMMAND = new Command(WRITE_TAG, Command.HELP, 3);	
 
     private String m_currentFocus;
 	private FocalObserverComponent m_focalComponent;
@@ -44,12 +47,12 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 	private InfoBubbleComponent m_infoBubble;
 	private Alert m_alert = new Alert("");
 
+	private  Vector m_channels = null;
 
 	// When focus changed, we setup InfoBubbleComponent to display text of new focused element
 	private FocalEventListener m_focalListener = new FocalEventListener() {
 		
 		public void onFocusChanged(Object arg0) {
-			System.out.println("focus changed "+arg0.getClass());
 			
 	        m_currentFocus = (String) arg0;
 	        if (m_currentFocus != null) {
@@ -76,7 +79,7 @@ public class CustomMapCanvas extends GestureMapCanvas  {
         ApplicationContext.getInstance().disableDirectUtils();
     }
 	
-	public CustomMapCanvas(Display arg0, double lat, double lon, int zoom) {
+	public CustomMapCanvas(Display arg0, int zoom) {
 		super(arg0);
 		initialiseAuth();
 		
@@ -97,11 +100,12 @@ public class CustomMapCanvas extends GestureMapCanvas  {
         map.addMapComponent(new CenteringComponent(this));
         
         // Setting map center and zoom
-		changeMapCenter(lat, lon, zoom);
+		changeMapCenterUsingLocation(zoom);
 		
 		addCommand(CLEAR_MAP_COMMAND);
 		addCommand(SETTINGS_COMMAND);
 		addCommand(SHOW_NEAREST_TAGS_COMMAND);
+		addCommand(WRITE_TAG_COMMAND);
 		
 	}
 	
@@ -110,7 +114,7 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 	protected void addMark(double lat, double lon, String text) {
 			
 		MapStandardMarker marker = mapFactory.createStandardMarker(new GeoCoordinate(lat, lon, 0),
-				10, null, MapStandardMarker.BALLOON);	
+				100, null, MapStandardMarker.BALLOON);
 		
         m_focalComponent.addData(marker, text);		
         map.addMapObject(marker);
@@ -120,8 +124,24 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 	public void clearMap(){
 		map.removeAllMapObjects();
 	}
+	public void changeMapCenterUsingLocation(final int zoom){
+        // Setting map center and zoom
+		new Thread(){
+			public void run(){
+				final QualifiedCoordinates qc = LocationObtainer.getQualifiedCoordinates();
+
+				if (qc == null){
+					System.out.println("qc == null");
+					return;
+				}
+				changeMapCenter(qc.getLatitude(), qc.getLongitude(), zoom);
+			}
+		}.start();
+		
+	}
 	
-	public void changeMapCenter(double lat, double lon, int zoom){
+	
+	public synchronized void changeMapCenter(double lat, double lon, int zoom){
         // Setting map center and zoom
 		map.setState(
                 new MapDisplayState(new GeoCoordinate(lat, lon, 0),
@@ -139,7 +159,7 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 
 	public void showNearestTags(final String channelFilter, final double radius){
 
-		new Thread(){
+		Thread thread = new Thread(){
 			public void run(){
 				try {
 					clearMap();
@@ -159,6 +179,7 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 					Vector channels = Geo2TagRequests.getInstance().
 							doFilterCircleRequest(qc.getLatitude(), qc.getLongitude(), radius);
 					addChannels(channels, channelFilter);
+					setChannels(channels);
 					System.out.println("Successful retrival of the nearest tags");
 				} catch (NullPointerException e) {
 					e.printStackTrace();
@@ -166,27 +187,45 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 					e.printStackTrace();
 				}
 			}
-		}.start();
+		};
+		thread.start();
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 
 	}
 	
+	public synchronized void setChannels(Vector channels){
+		m_channels = channels;
+	}
+	
+	public synchronized Vector getChannels(){
+		return m_channels;
+	}
+	
 	private synchronized void addChannels(Vector channels, String channelFilter) {
 
-			for (int i=0; i<channels.size(); i++){
-				Channel channel = (Channel)channels.elementAt(i);
-				
-				// Skip all channels which are not equal to ChannelFilter, if it is not set to SHOW_ALL_CHANNELS
-				if (channelFilter.equals(Settings.SHOW_ALL_CHANNELS) 
-						&& !channel.getName().equals(channelFilter))
-					continue;
-				
-				Vector marks = channel.getMarks();
-				for (int j=0; j<marks.size(); j++){
-					Mark mark = (Mark)marks.elementAt(j);
-					addMark(mark.getLatitude(), mark.getLongitude(), mark.getTitle());
-				}
-			}
+		System.out.println("ChannelFilter == "+channelFilter + ", channels.size == " + channels.size() );
 		
+		for (int i=0; i<channels.size(); i++){
+			Channel channel = (Channel)channels.elementAt(i);
+
+			// Skip all channels which are not equal to ChannelFilter, if it is not set to SHOW_ALL_CHANNELS
+			if (!channelFilter.equals(Settings.SHOW_ALL_CHANNELS) 
+					&& !channel.getName().equals(channelFilter))
+				continue;
+			System.out.println("processing channel"+channel.getName());
+			Vector marks = channel.getMarks();
+			for (int j=0; j<marks.size(); j++){
+				Mark mark = (Mark)marks.elementAt(j);
+				
+				addMark(mark.getLatitude(), mark.getLongitude(), mark.getUser()+": " +mark.getTitle());
+			}
+		}
+
 	}
 }

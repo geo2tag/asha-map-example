@@ -3,7 +3,11 @@ package org.geo2tag.ashamapsexample;
 
 import java.util.Vector;
 
+import org.json.me.JSONWriter;
+
 import ru.spb.osll.json.Errno;
+import ru.spb.osll.json.JsonApplyMarkRequest;
+import ru.spb.osll.json.JsonApplyMarkResponse;
 import ru.spb.osll.json.JsonFilterCircleRequest;
 import ru.spb.osll.json.JsonFilterResponse;
 import ru.spb.osll.json.JsonLoginRequest;
@@ -71,6 +75,14 @@ public class Geo2TagRequests {
 	public void doWriteTag(double latitude, double longitude, double altitude, String channel, String label) 
 			throws JsonRequestException, NullPointerException{
 		
+		String time = DateUtil.getCurrentTime();
+		
+		JsonApplyMarkRequest req = new JsonApplyMarkRequest(getAuthToken(), channel, label, "",
+				label, latitude, longitude, altitude, time, Settings.SERVER_URL);
+		JsonApplyMarkResponse res = new JsonApplyMarkResponse();
+		int[] errnos = {Errno.SUCCESS.intValue()};
+
+		RequestSender.performRequest(req, res, errnos);
 	}
 	
 	private String getAuthToken() {
