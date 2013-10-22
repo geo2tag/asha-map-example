@@ -1,4 +1,4 @@
-MIDlet-1: AshaMapsExample,,AshaMapsExampleMIDlet
+MIDlet-1: AshaMapsExample,,org.geo2tag.ashamapsexample.AshaMapsExampleMIDlet
 MIDlet-Jar-URL: AshaMapsExample.jar
 MIDlet-Name: AshaMapsExample MIDlet Suite
 MIDlet-Vendor: MIDlet Suite Vendor
