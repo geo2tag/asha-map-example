@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/maps-components.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/j2megeo.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/routing.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/maps-gesture.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/maps-kml.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/places.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/maps-core.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

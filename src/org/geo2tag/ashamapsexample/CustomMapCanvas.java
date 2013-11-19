@@ -74,8 +74,8 @@ public class CustomMapCanvas extends GestureMapCanvas  {
 	};
 
 	private void initialiseAuth() {
-        ApplicationContext.getInstance().setAppID("L9v9rAbBD4RIKkteVoub");
-        ApplicationContext.getInstance().setToken("NhjevMainHwsIKz8HObuvQ");
+        ApplicationContext.getInstance().setAppID("Put your appID here");
+        ApplicationContext.getInstance().setToken("Put app token here");
         ApplicationContext.getInstance().disableDirectUtils();
     }
 	
